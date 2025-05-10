@@ -10,8 +10,8 @@ const PORT_HTTPS = 8081;
 const stats_path = "stats.json"
 const USE_CACHED_FILE = false;
 
-const DISABLE_HTTPS = false;
-const DISABLE_HTTP = false;
+let DISABLE_HTTPS = false;
+let DISABLE_HTTP = false;
 
 // DISABLE_HTTPS = true;
 DISABLE_HTTP = true;
@@ -20,7 +20,9 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path_module = require('path');
+const Logger = require('./logger.js');
 
+let logger = new Logger({ log_dir: "logs/website" })
 
 class Statistics {
     requests = 0;
@@ -306,13 +308,13 @@ async function requestListener(req, res) {
             return
         } catch (err) {
             if (err.code == 'ENOENT') {
-                console.log("File '" + path + "' not found")
+                logger.info("File '" + path + "' not found")
             } else {
-                console.error(err);
+                logger.error(err);
             }
         }
     } else {
-        console.log("Suspicious request '"+path+"'")
+        logger.info("Suspicious request '"+path+"'")
         // we don't respond to suspicious requests
         res.end()
         return
@@ -330,7 +332,7 @@ async function requestListener(req, res) {
 if (!DISABLE_HTTP) {
     const server = http.createServer(requestListener);
     server.listen(PORT, () => {
-        console.log("Server is running on", PORT);
+        logger.info("Server is running on", PORT);
     });
 }
 
@@ -362,10 +364,10 @@ if (!DISABLE_HTTPS) {
     const https_server = https.createServer(options, requestListener);
 
     https_server.listen(PORT_HTTPS, () => {
-        console.log("Server is running on", PORT_HTTPS);
+        logger.info("Server is running on", PORT_HTTPS);
     });
     } catch(ex) {
-        console.log(ex)
+        logger.error(ex)
     }
 }
 
@@ -408,7 +410,7 @@ function ModifyContent(data, options) {
         md_title = files[0];
         title_was_set = true
     }
-    console.log(md_title, options)
+    logger.info("Request",md_title, options)
 
     function fix() {
         const pre = string.substring(0, index_of_insert)
@@ -1032,14 +1034,16 @@ async function fetchReleases() {
     try {
         const response = await fetch(url);
         if (!response.ok) {
-            console.log("ERROR: When fetching '",url,"' HTTP status:", response.status)
+            logger.error("When fetching '",url,"' HTTP status:", response.status)
             return null
         }
-        const data = await response.json()
-        console.log("DEBUG: Fetched ", data.length, " bytes of release data from Github API")
+        const text = await response.text()
+        const data = JSON.parse(text)
+        logger.info("Fetched", text.length," bytes of release data from Github API")
+        logger.debug("Fetched data:", data)
         return data
     } catch (error) {
-        console.log("ERROR: Fetching releases:", error)
+        logger.error("Fetching releases:", error)
     }
     return null
 }
@@ -1056,11 +1060,11 @@ async function getLatestRelease(blocking = true) {
         if(!blocking)
             return null
         // If we're already fetching, wait for the current fetch to complete
-        console.log("WAITING")
+        logger.debug("WAITING")
         while (isFetching) {
             await new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay
         }
-        console.log("GO!")
+        logger.debug("GO!")
         // whoever was fetching failed so there is no point if we try to fetch too
         if(!cached_release_data)
             return null
@@ -1070,17 +1074,17 @@ async function getLatestRelease(blocking = true) {
         // No data at all -> read from file
         if (fs.existsSync(local_cached_release_data_path)) {
             try {
-                console.log("Read cache file")
+                logger.debug("Read cache file")
                 const cached_release_data_text = fs.readFileSync(local_cached_release_data_path, {encoding:'utf8'})
                 cached_release_data = JSON.parse(cached_release_data_text)
             } catch (error) {
-                console.log("ERROR: Cannot read from '", local_cached_release_data_path, "' even though it exists! ",error)
+                logger.error("Cannot read from '", local_cached_release_data_path, "' even though it exists! ",error)
             }
             if (cached_release_data != null) {
                 try {
                     cached_release_data_fetch_time_ms = fs.statSync(local_cached_release_data_path).mtimeMs
                 } catch (error) {
-                    console.log("ERROR: Cannot statSync '", local_cached_release_data_path, "' even though it exists and we read file data! ", error)
+                    logger.error("Cannot statSync '", local_cached_release_data_path, "' even though it exists and we read file data! ", error)
                     cached_release_data_fetch_time_ms = Date.now()
                 }
             }
@@ -1104,7 +1108,7 @@ async function getLatestRelease(blocking = true) {
             try {
                 fs.writeFileSync(local_cached_release_data_path, JSON.stringify(data), {encoding:'utf8'})
             } catch(error) {
-                console.log("ERROR: Cannot write '",local_cached_release_data_path,"'!", error)
+                logger.error("Cannot write '",local_cached_release_data_path,"'!", error)
             } finally {
                 isFetching = false
             }
@@ -1115,7 +1119,7 @@ async function getLatestRelease(blocking = true) {
 
     // parse information we want
     if(typeof(cached_release_data) == Array) {
-        console.log("ERROR: Cached data is not an array, ",typeof(cached_release_data))
+        logger.error("Cached data is not an array, ",typeof(cached_release_data))
         return null
     }
     let latest_data = null;
@@ -1188,7 +1192,7 @@ class TokenBucket {
         this.m_last_time = now
 
         new_bytes = this.m_bytes_per_second * delta_seconds
-        console.log("    new_bytes ",new_bytes)
+        logger.debug("Token bucket: new_bytes ",new_bytes)
         this.m_free_bytes += new_bytes
         if (this.m_free_bytes > this.m_capacity)
             this.m_free_bytes = this.m_capacity

@@ -4,3 +4,4 @@ logs
 stats.json
 *cached_release_data.json
 listener_config.json
+morsecode

@@ -37,7 +37,7 @@ class Logger {
         this.level = this.level.toUpperCase()
 
         // internal variables
-        this.level_index = this.levels.indexOf(options.level);
+        this.level_index = this.levels.indexOf(this.level);
         this.checked_dir_existance = false
     }
 
@@ -66,7 +66,8 @@ class Logger {
             } else {
                 color = this.colors[level_index]
             }
-            color_def = "\x1b[0m"
+            if (color != "")
+                color_def = "\x1b[0m"
         }
         out = `${this.getTimestamp()} ${color}[${level.toUpperCase()}]:${color_def}`
         if(level_index == -1) {
