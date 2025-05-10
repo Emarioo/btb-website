@@ -163,8 +163,8 @@ async function requestListener(req, res) {
 var handling_webhook = false
 async function handle_webhook(data) {
     let commit = data.after
-    let repo = data.repository
-    let ref = data.base_ref // may be branch or tag
+    let repo = data.repository.name
+    let ref = data.ref // may be branch or tag (note that base_ref may be null so we use ref from webhook data)
     let forced = data.forced // TODO: If forced then we may need to reset repo and then git pull
 
     if (handling_webhook) {
@@ -181,13 +181,13 @@ async function handle_webhook(data) {
             }, (error, stdout, stderr) => {
                 let text = stdout
                 if (stderr.length > 0) {
-                    text += "STDERR: " + stderr
+                    text += stderr
                 }
                 if (error) {
-                    logger.error(text)
+                    logger.error("btb, git pull:\n", text)
                     resolve(false)
                 } else {
-                    logger.info(text)
+                    logger.info("btb, git pull:\n", text)
                     resolve(true)
                 }
             })
@@ -207,10 +207,10 @@ async function handle_webhook(data) {
                     text += stderr
                 }
                 if (error) {
-                    logger.error("git pull\n",text)
+                    logger.error("btb-website, git pull:\n", text)
                     resolve(false)
                 } else {
-                    logger.info(text)
+                    logger.info("btb-website, git pull:\n", text)
                     resolve(true)
                 }
             })
@@ -220,6 +220,7 @@ async function handle_webhook(data) {
             logger.info("Restarted website process")
         }
     }
+    handling_webhook = false
 }
 
 function checkPort(port) {
