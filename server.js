@@ -10,14 +10,16 @@ const PORT_HTTPS = 8081;
 const stats_path = "stats.json"
 const USE_CACHED_FILE = false;
 
-// const DISABLE_HTTPS = false;
-const DISABLE_HTTPS = true;
+const DISABLE_HTTPS = false;
+const DISABLE_HTTP = false;
+
+// DISABLE_HTTPS = true;
+DISABLE_HTTP = true;
 
 const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path_module = require('path');
-const { findPackageJSON } = require("module");
 
 
 class Statistics {
@@ -325,10 +327,12 @@ async function requestListener(req, res) {
 // #################
 //      HTTP
 // #################
-const server = http.createServer(requestListener);
-server.listen(PORT, () => {
-    console.log("Server is running on", PORT);
-});
+if (!DISABLE_HTTP) {
+    const server = http.createServer(requestListener);
+    server.listen(PORT, () => {
+        console.log("Server is running on", PORT);
+    });
+}
 
 // #################
 //      HTTPS
