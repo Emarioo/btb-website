@@ -384,7 +384,7 @@ function ModifyContent(data, options) {
     let string = data.toString()
     let keyword, index_of_insert, text = "";
 
-    let md_dir = "../../docs/guide"
+    let md_dir = "../BetterThanBatch/docs/guide"
     // TODO: Error handling
     let files = fs.readdirSync(md_dir)
     files.sort((a,b)=>{
