@@ -80,7 +80,7 @@ function is_path_sanitized(filename) {
             continue
         if (code >= "0".charCodeAt(0) && code <= "9".charCodeAt(0))
             continue
-        if(chr == '-' || chr == '_' || chr == '/')
+        if(chr == '-' || chr == '_' || chr == '/' || chr == " ")
             continue
 
         if(chr == '.') {
@@ -441,7 +441,7 @@ function ModifyContent(data, options) {
         if(title_was_set) {
             let tmp = md_title.replace(/%20/g," ")
             let path = md_dir + "/" + tmp
-            if (!is_path_sanitized(path))
+            if (!is_path_sanitized(tmp))
                 return string
             try {
                 let md_data = fs.readFileSync(path)
@@ -449,7 +449,7 @@ function ModifyContent(data, options) {
                 text += html_data
                 fix()
             } catch (e) {
-                console.error(e)
+                logger.error(e)
             }
         }
     }

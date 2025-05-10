@@ -86,7 +86,7 @@ async function insert_latest_release() {
         url = find_os_version("mac")
     }
     if (url) {
-        download.innerHTML = "<b>Download BTB</b>" + os
+        download.innerHTML = "<b>Download BTB</b>"
         download.href = url
     } else {
         download.innerHTML = "<b>Github Releases</b> <br> (not available on "+os+")"
