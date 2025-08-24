@@ -1142,7 +1142,8 @@ async function getLatestRelease(blocking = true) {
             continue
 
         let tim = new Date(rel["published_at"])
-        if (latest_ms > tim.getUTCMilliseconds())
+        // logger.debug(rel["name"], rel["published_at"], tim.getTime())
+        if (latest_ms > tim.getTime())
             continue
 
         let data = {
@@ -1167,7 +1168,7 @@ async function getLatestRelease(blocking = true) {
             }
         }
 
-        latest_ms = tim.getUTCMilliseconds()
+        latest_ms = tim.getTime()
         latest_data = data
     }
     return latest_data
